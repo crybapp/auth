@@ -11,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -28,9 +27,14 @@ import (
 
 // Resource : http response for authenticated property
 type Resource struct {
-	ID       string
-	Type     string
-	Resource bson.M
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Resource bson.M `json:"resource"`
+}
+
+// AuthenticationRequest : http request for authentication
+type AuthenticationRequest struct {
+	Token string `json:"token"`
 }
 
 func createDatabaseClient() (*mongo.Client, error) {
@@ -50,15 +54,18 @@ func createDatabaseClient() (*mongo.Client, error) {
 
 func extractJwtToken(req *http.Request) (string, error) {
 	var token string
+	var request AuthenticationRequest
 
-	authorization := req.Header.Get("authorization")
-	tokenParts := strings.Fields(authorization)
-
-	if len(tokenParts) != 2 {
-		return token, errors.New("authorization header incorrect")
+	if req.Body == nil {
+		return token, errors.New("no request body found")
 	}
 
-	token = tokenParts[1]
+	err := json.NewDecoder(req.Body).Decode(&request)
+	if err != nil {
+		return token, err
+	}
+
+	token = request.Token
 
 	return token, nil
 }
@@ -74,24 +81,8 @@ func getCollectionName(_type string) string {
 	}
 }
 
-func fetchDocument(_collection string, id string) (bson.M, error) {
-	client, err := createDatabaseClient()
-
-	result := bson.M{}
-	filter := bson.M{"info.id": &id}
-
-	collection := client.Database("cryb").Collection(_collection)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	err = collection.FindOne(ctx, filter).Decode(&result)
-
-	cancel()
-
-	if err != nil {
-		return result, err
-	}
-
-	return result, nil
+func handleError(w http.ResponseWriter, e error) {
+	http.Error(w, e.Error(), 500)
 }
 
 func fetchResourceFromToken(tokenString string) (Resource, error) {
@@ -120,8 +111,24 @@ func fetchResourceFromToken(tokenString string) (Resource, error) {
 	return resource, nil
 }
 
-func handleError(w http.ResponseWriter, e error) {
-	fmt.Fprintf(w, e.Error())
+func fetchDocument(_collection string, id string) (bson.M, error) {
+	client, err := createDatabaseClient()
+
+	result := bson.M{}
+	filter := bson.M{"info.id": &id}
+
+	collection := client.Database("cryb").Collection(_collection)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	err = collection.FindOne(ctx, filter).Decode(&result)
+
+	cancel()
+
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
 
 func authenticate(w http.ResponseWriter, req *http.Request) {

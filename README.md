@@ -55,7 +55,7 @@ Make sure that you have installed MongoDB, and that it is running on port 27017.
 The command to start MongoDB is `mongod`.
 
 #### Starting @cryb/auth
-To run `@cryb/auth`, run `go run main.go`.
+To run `@cryb/auth`, run `go run .`.
 
 #### Building
 To build `@cryb/auth`, run `go build -o main .`.
