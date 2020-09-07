@@ -64,4 +64,4 @@ Once built, run `./main` to run the compiled app.
 
 ## Questions / Issues
 
-If you have an issues with `@cryb/auth`, please either open a GitHub issue, contact a maintainer or join the [Cryb Discord Server](https://discord.gg/ShTATH4) and ask in #tech-support
+If you have an issues with `@cryb/auth`, please either open a GitHub issue, contact a maintainer or join the [Cryb Discord Server](https://discord.gg/xdhEgD5) and ask in `#tech-support`.
